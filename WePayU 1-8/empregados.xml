@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<empregados>
+    <empregado id="2" tipo="comissionado">
+        <nome>Gaiato Vendedor</nome>
+        <endereco>Rua dos Bufoes, 333 - Campina Grande</endereco>
+        <sindicalizado>false</sindicalizado>
+        <salarioMensal>2300.00</salarioMensal>
+        <comissao>0.05</comissao>
+        <metodoPagamento>emMaos</metodoPagamento>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+</empregados>
