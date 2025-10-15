@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<empregados>
+    <empregado id="1" tipo="horista">
+        <nome>Fernanda Montenegro</nome>
+        <endereco>end1</endereco>
+        <agendaPagamento>semanal 5</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioHora>12.50</salarioHora>
+        <metodoPagamento>emMaos</metodoPagamento>
+    </empregado>
+    <empregado id="2" tipo="horista">
+        <nome>Paloma Duarte</nome>
+        <endereco>end2</endereco>
+        <agendaPagamento>semanal 5</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioHora>11.25</salarioHora>
+        <metodoPagamento>banco</metodoPagamento>
+        <banco>Banco do Brasil</banco>
+        <agencia>1591-1</agencia>
+        <contaCorrente>51000-0</contaCorrente>
+        <cartao>
+            <data>2005-01-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-01-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-02</data>
+            <horas>7</horas>
+        </cartao>
+    </empregado>
+    <empregado id="3" tipo="horista">
+        <nome>Lavinia Vlasak</nome>
+        <endereco>end3</endereco>
+        <agendaPagamento>semanal 5</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioHora>11.21</salarioHora>
+        <metodoPagamento>banco</metodoPagamento>
+        <banco>Banco do Brasil</banco>
+        <agencia>1591-1</agencia>
+        <contaCorrente>51001-1</contaCorrente>
+        <cartao>
+            <data>2005-01-01</data>
+            <horas>10</horas>
+        </cartao>
+        <cartao>
+            <data>2005-01-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-01</data>
+            <horas>12</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-02</data>
+            <horas>7</horas>
+        </cartao>
+    </empregado>
+    <empregado id="4" tipo="horista">
+        <nome>Claudia Abreu</nome>
+        <endereco>end4</endereco>
+        <agendaPagamento>semanal 5</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s123</idSindicato>
+        <taxaSindical>1.00</taxaSindical>
+        <salarioHora>11.00</salarioHora>
+        <metodoPagamento>emMaos</metodoPagamento>
+        <cartao>
+            <data>2005-01-01</data>
+            <horas>10</horas>
+        </cartao>
+        <cartao>
+            <data>2005-01-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-01</data>
+            <horas>12</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-02</data>
+            <horas>7</horas>
+        </cartao>
+    </empregado>
+    <empregado id="5" tipo="horista">
+        <nome>Claudia Raia</nome>
+        <endereco>end5</endereco>
+        <agendaPagamento>semanal 5</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s124</idSindicato>
+        <taxaSindical>1.20</taxaSindical>
+        <salarioHora>10.00</salarioHora>
+        <metodoPagamento>banco</metodoPagamento>
+        <banco>Banco do Brasil</banco>
+        <agencia>1591-1</agencia>
+        <contaCorrente>51002-2</contaCorrente>
+        <cartao>
+            <data>2005-01-01</data>
+            <horas>10</horas>
+        </cartao>
+        <cartao>
+            <data>2005-01-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-01</data>
+            <horas>8</horas>
+        </cartao>
+        <cartao>
+            <data>2005-02-02</data>
+            <horas>7</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-01</data>
+            <horas>12</horas>
+        </cartao>
+        <cartao>
+            <data>2005-12-02</data>
+            <horas>7</horas>
+        </cartao>
+        <taxa>
+            <data>2005-01-01</data>
+            <valor>80</valor>
+        </taxa>
+        <taxa>
+            <data>2005-12-01</data>
+            <valor>80</valor>
+        </taxa>
+    </empregado>
+    <empregado id="6" tipo="assalariado">
+        <nome>Natalia do Valle</nome>
+        <endereco>end6</endereco>
+        <agendaPagamento>mensal $</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioMensal>1000.00</salarioMensal>
+        <metodoPagamento>correios</metodoPagamento>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="7" tipo="assalariado">
+        <nome>Regina Duarte</nome>
+        <endereco>end7</endereco>
+        <agendaPagamento>mensal $</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s125</idSindicato>
+        <taxaSindical>1.00</taxaSindical>
+        <salarioMensal>1100.00</salarioMensal>
+        <metodoPagamento>correios</metodoPagamento>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="8" tipo="assalariado">
+        <nome>Flavia Alessandra</nome>
+        <endereco>end8</endereco>
+        <agendaPagamento>mensal $</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s126</idSindicato>
+        <taxaSindical>1.00</taxaSindical>
+        <salarioMensal>1200.00</salarioMensal>
+        <metodoPagamento>correios</metodoPagamento>
+        <taxa>
+            <data>2005-01-01</data>
+            <valor>70</valor>
+        </taxa>
+        <taxa>
+            <data>2005-12-01</data>
+            <valor>75</valor>
+        </taxa>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="9" tipo="comissionado">
+        <nome>Deborah Secco</nome>
+        <endereco>end9</endereco>
+        <agendaPagamento>semanal 2 5</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioMensal>1300.00</salarioMensal>
+        <comissao>0.11</comissao>
+        <metodoPagamento>correios</metodoPagamento>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="10" tipo="comissionado">
+        <nome>Ana Paula Arosio</nome>
+        <endereco>end10</endereco>
+        <agendaPagamento>semanal 2 5</agendaPagamento>
+        <sindicalizado>false</sindicalizado>
+        <salarioMensal>1400.00</salarioMensal>
+        <comissao>0.12</comissao>
+        <metodoPagamento>correios</metodoPagamento>
+        <venda>
+            <data>2005-01-01</data>
+            <valor>123.45</valor>
+        </venda>
+        <venda>
+            <data>2005-01-02</data>
+            <valor>200</valor>
+        </venda>
+        <venda>
+            <data>2005-02-01</data>
+            <valor>123.1</valor>
+        </venda>
+        <venda>
+            <data>2005-02-02</data>
+            <valor>500</valor>
+        </venda>
+        <venda>
+            <data>2005-12-01</data>
+            <valor>600</valor>
+        </venda>
+        <venda>
+            <data>2005-12-02</data>
+            <valor>800</valor>
+        </venda>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="11" tipo="comissionado">
+        <nome>Suzana Vieira</nome>
+        <endereco>end11</endereco>
+        <agendaPagamento>semanal 2 5</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s127</idSindicato>
+        <taxaSindical>1.00</taxaSindical>
+        <salarioMensal>1500.00</salarioMensal>
+        <comissao>0.13</comissao>
+        <metodoPagamento>correios</metodoPagamento>
+        <venda>
+            <data>2005-01-01</data>
+            <valor>123.45</valor>
+        </venda>
+        <venda>
+            <data>2005-01-02</data>
+            <valor>200</valor>
+        </venda>
+        <venda>
+            <data>2005-02-01</data>
+            <valor>123.1</valor>
+        </venda>
+        <venda>
+            <data>2005-02-02</data>
+            <valor>500</valor>
+        </venda>
+        <venda>
+            <data>2005-12-01</data>
+            <valor>600</valor>
+        </venda>
+        <venda>
+            <data>2005-12-02</data>
+            <valor>800</valor>
+        </venda>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+    <empregado id="12" tipo="comissionado">
+        <nome>Maite Proenca</nome>
+        <endereco>end12</endereco>
+        <agendaPagamento>semanal 2 5</agendaPagamento>
+        <sindicalizado>true</sindicalizado>
+        <idSindicato>s128</idSindicato>
+        <taxaSindical>1.00</taxaSindical>
+        <salarioMensal>1600.00</salarioMensal>
+        <comissao>0.14</comissao>
+        <metodoPagamento>correios</metodoPagamento>
+        <taxa>
+            <data>2005-01-01</data>
+            <valor>70</valor>
+        </taxa>
+        <taxa>
+            <data>2005-12-01</data>
+            <valor>75</valor>
+        </taxa>
+        <venda>
+            <data>2005-01-01</data>
+            <valor>123.45</valor>
+        </venda>
+        <venda>
+            <data>2005-01-02</data>
+            <valor>200</valor>
+        </venda>
+        <venda>
+            <data>2005-02-01</data>
+            <valor>123.1</valor>
+        </venda>
+        <venda>
+            <data>2005-02-02</data>
+            <valor>500</valor>
+        </venda>
+        <venda>
+            <data>2005-12-01</data>
+            <valor>600</valor>
+        </venda>
+        <venda>
+            <data>2005-12-02</data>
+            <valor>800</valor>
+        </venda>
+        <ultimaDataPagamento>2004-12-31</ultimaDataPagamento>
+    </empregado>
+</empregados>
