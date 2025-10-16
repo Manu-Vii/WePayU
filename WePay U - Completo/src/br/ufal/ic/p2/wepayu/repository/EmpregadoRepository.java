@@ -97,7 +97,7 @@ public class EmpregadoRepository {
          *
          * @return O mapa de empregados do estado salvo.
          */
-        private Map<String, Empregado> getSavedState() {
+        public Map<String, Empregado> getSavedState() {
             return this.state;
         }
     }
