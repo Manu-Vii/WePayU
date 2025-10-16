@@ -18,44 +18,48 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
- * Gerenciador principal da lógica de negócio da Folha de Pagamento.
- * <p>
- * Esta classe é responsável por todas as operações de processamento da folha,
- * incluindo a identificação de empregados a serem pagos em uma data específica,
- * o cálculo detalhado de seus salários (bruto, descontos, líquido) e a geração
- * de um relatório de saída formatado.
- * </p>
+ * Classe responsável por gerenciar as operações da folha de pagamento,
+ * incluindo a simulação e a execução do cálculo e geração de relatórios.
  */
 public class FolhaPagamentoManager {
     private final EmpregadoRepository empregadoRepository = EmpregadoRepository.getInstance();
 
     /**
-     * Calcula o valor total bruto da folha de pagamento para uma data específica.
+     * Simula o cálculo da folha de pagamento para uma data específica e retorna o valor total.
+     * Esta operação não altera o estado dos empregados (ex: última data de pagamento).
      *
-     * @param data A data para a qual a folha deve ser calculada, no formato "d/M/yyyy".
-     * @return O valor total da folha como {@link BigDecimal}.
-     * @throws Exception se a data for inválida.
+     * @param data A data para a qual a folha de pagamento deve ser simulada, no formato "dd/MM/yyyy".
+     * @return O valor total da folha de pagamento como um {@link BigDecimal}.
+     * @throws Exception se ocorrer um erro ao analisar a data.
      */
     public BigDecimal totalFolha(String data) throws Exception {
         LocalDate dataAtual = AppUtils.parseDate(data);
         BigDecimal total = BigDecimal.ZERO;
 
-        for (Empregado emp : empregadoRepository.getAll().values()) {
-            if (deveSerPago(emp, dataAtual)) {
-                total = total.add(calcularPagamento(emp, dataAtual));
+        EmpregadoRepository.Memento originalState = empregadoRepository.createMemento();
+        try {
+            List<Empregado> empregadosSimulacao = originalState.getSavedState().values().stream()
+                    .map(Empregado::clone)
+                    .collect(Collectors.toList());
+
+            for (Empregado emp : empregadosSimulacao) {
+                if (deveSerPago(emp, dataAtual)) {
+                    total = total.add(calcularPagamentoCompleto(emp, dataAtual, true).salarioBruto);
+                }
             }
+        } finally {
+            empregadoRepository.setMemento(originalState);
         }
         return total.setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
-     * Processa a folha de pagamento para uma data específica.
-     * Este método identifica os empregados a serem pagos, calcula seus vencimentos e descontos,
-     * gera um arquivo de relatório detalhado e atualiza a data do último pagamento dos empregados.
+     * Executa a folha de pagamento para uma data específica, gerando um arquivo de saída com o relatório.
+     * Esta operação atualiza a última data de pagamento dos empregados pagos.
      *
-     * @param data  A data do processamento da folha, no formato "d/M/yyyy".
-     * @param saida O caminho do arquivo de texto onde o relatório será salvo.
-     * @throws Exception se a data for inválida ou ocorrer um erro de I/O.
+     * @param data  A data para a qual a folha de pagamento deve ser executada, no formato "dd/MM/yyyy".
+     * @param saida O caminho do arquivo onde o relatório da folha de pagamento será salvo.
+     * @throws Exception se ocorrer um erro ao analisar a data ou ao escrever no arquivo de saída.
      */
     public void rodaFolha(String data, String saida) throws Exception {
         LocalDate dataAtual = AppUtils.parseDate(data);
@@ -85,11 +89,11 @@ public class FolhaPagamentoManager {
     /**
      * Gera uma seção do relatório da folha de pagamento para um tipo específico de empregado.
      *
-     * @param writer      O {@link PrintWriter} para escrever no arquivo de saída.
+     * @param writer      O {@link PrintWriter} para escrever o relatório.
      * @param empregados  A lista de todos os empregados a serem pagos.
-     * @param tipo        O tipo de empregado para filtrar e gerar o relatório (ex: "horista").
-     * @param dataAtual   A data atual da folha de pagamento.
-     * @return O valor total bruto pago para este grupo de empregados.
+     * @param tipo        O tipo de empregado a ser processado ("horista", "assalariado", "comissionado").
+     * @param dataAtual   A data atual do pagamento.
+     * @return O total bruto pago para o tipo de empregado especificado.
      */
     private BigDecimal gerarRelatorio(PrintWriter writer, List<Empregado> empregados, String tipo, LocalDate dataAtual) {
         BigDecimal totalBruto = BigDecimal.ZERO, totalDescontos = BigDecimal.ZERO, totalLiquido = BigDecimal.ZERO;
@@ -119,7 +123,7 @@ public class FolhaPagamentoManager {
         }
 
         for (Empregado emp : filtrados) {
-            PagamentoInfo info = calcularPagamentoCompleto(emp, dataAtual);
+            PagamentoInfo info = calcularPagamentoCompleto(emp, dataAtual, false);
             writer.print(formatarLinhaRelatorio(emp, info));
 
             totalBruto = totalBruto.add(info.salarioBruto);
@@ -149,9 +153,10 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Converte o objeto de método de pagamento em uma string formatada para o relatório.
+     * Retorna uma representação em string do método de pagamento de um empregado.
+     *
      * @param emp O empregado.
-     * @return A descrição textual do método de pagamento.
+     * @return Uma string descrevendo o método de pagamento.
      */
     private String getMetodoPagamentoString(Empregado emp) {
         MetodoPagamento metodo = emp.getMetodoPagamento();
@@ -162,13 +167,18 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Determina se um empregado deve ser pago em uma data específica, com base em sua agenda de pagamento.
-     * @param emp O empregado a ser verificado.
-     * @param data A data a ser verificada.
-     * @return {@code true} se for um dia de pagamento para o empregado, {@code false} caso contrário.
+     * Verifica se um empregado deve ser pago na data especificada, com base em sua agenda de pagamento.
+     *
+     * @param emp  O empregado a ser verificado.
+     * @param data A data do pagamento.
+     * @return {@code true} se o empregado deve ser pago, {@code false} caso contrário.
      */
     private boolean deveSerPago(Empregado emp, LocalDate data) {
         LocalDate dataContratacao = emp.getDataContratacao();
+        if (emp instanceof EmpregadoHorista && dataContratacao == null && !emp.getCartoesPonto().isEmpty()){
+            dataContratacao = emp.getCartoesPonto().stream().min(Comparator.comparing(CartaoDePonto::getData)).get().getData();
+        }
+
         if (dataContratacao != null && data.isBefore(dataContratacao)) {
             return false;
         }
@@ -191,10 +201,7 @@ public class FolhaPagamentoManager {
                     return true;
                 }
                 LocalDate ultimoDiaDoMes = data.with(TemporalAdjusters.lastDayOfMonth());
-                if (diaMes > ultimoDiaDoMes.getDayOfMonth() && data.equals(ultimoDiaDoMes)) {
-                    return true;
-                }
-                return false;
+                return diaMes > ultimoDiaDoMes.getDayOfMonth() && data.equals(ultimoDiaDoMes);
             }
         } else if (tipoAgenda.equals("semanal")) {
             int frequencia, diaDaSemana;
@@ -211,7 +218,7 @@ public class FolhaPagamentoManager {
                 return false;
             }
 
-            LocalDate anchorDate = LocalDate.of(2004, 12, 27); // Uma segunda-feira
+            LocalDate anchorDate = LocalDate.of(2004, 12, 27);
             long weeksSinceAnchor = ChronoUnit.WEEKS.between(anchorDate, data);
 
             return weeksSinceAnchor >= 0 && weeksSinceAnchor % frequencia == 0;
@@ -220,67 +227,70 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Calcula o salário bruto de um empregado para uma data de pagamento.
-     * @param emp O empregado.
-     * @param data A data do pagamento.
-     * @return O valor do salário bruto.
-     */
-    private BigDecimal calcularPagamento(Empregado emp, LocalDate data) {
-        return calcularPagamentoCompleto(emp, data).salarioBruto;
-    }
-
-    /**
-     * Calcula todas as informações de pagamento (bruto, descontos, líquido, etc.) para um empregado.
-     * @param emp O empregado.
-     * @param data A data do pagamento.
+     * Calcula as informações completas de pagamento para um empregado,
+     * delegando para o método específico de acordo com o tipo do empregado.
+     *
+     * @param emp         O empregado para o qual o pagamento será calculado.
+     * @param data        A data do pagamento.
+     * @param isSimulacao {@code true} se for uma simulação, {@code false} caso contrário.
      * @return Um objeto {@link PagamentoInfo} com todos os detalhes do pagamento.
      */
-    private PagamentoInfo calcularPagamentoCompleto(Empregado emp, LocalDate data) {
+    private PagamentoInfo calcularPagamentoCompleto(Empregado emp, LocalDate data, boolean isSimulacao) {
         return switch (emp.getTipo()) {
-            case "horista" -> calcularPagamentoHoristaCompleto((EmpregadoHorista) emp, data);
-            case "assalariado" -> calcularPagamentoAssalariadoCompleto((EmpregadoAssalariado) emp, data);
-            case "comissionado" -> calcularPagamentoComissionadoCompleto((EmpregadoComissionado) emp, data);
+            case "horista" -> calcularPagamentoHoristaCompleto((EmpregadoHorista) emp, data, isSimulacao);
+            case "assalariado" -> calcularPagamentoAssalariadoCompleto((EmpregadoAssalariado) emp, data, isSimulacao);
+            case "comissionado" -> calcularPagamentoComissionadoCompleto((EmpregadoComissionado) emp, data, isSimulacao);
             default -> new PagamentoInfo();
         };
     }
 
     /**
-     * Determina a data de início do período de pagamento com base na agenda do empregado e na data do último pagamento.
-     * @param emp O empregado.
-     * @param dataPagamento A data do pagamento atual.
-     * @return A data de início do período a ser considerado para o cálculo.
+     * Determina a data de início do período de pagamento com base na agenda e no histórico do empregado.
+     *
+     * @param emp           O empregado.
+     * @param dataPagamento A data do pagamento.
+     * @param isSimulacao   Indica se o cálculo é uma simulação.
+     * @return A data de início do período de pagamento.
      */
-    private LocalDate obterInicioPeriodo(Empregado emp, LocalDate dataPagamento) {
-        LocalDate inicioCalculado;
-        String agenda = emp.getAgendaPagamento();
+    private LocalDate obterInicioPeriodo(Empregado emp, LocalDate dataPagamento, boolean isSimulacao) {
+        if (!isSimulacao && emp.getUltimaDataPagamento() != null) {
+            return emp.getUltimaDataPagamento().plusDays(1);
+        }
 
+        if (isSimulacao && emp instanceof EmpregadoHorista && !emp.getCartoesPonto().isEmpty()) {
+            LocalDate primeiroCartao = emp.getCartoesPonto().stream()
+                    .min(Comparator.comparing(CartaoDePonto::getData))
+                    .get().getData();
+            if (primeiroCartao.isAfter(dataPagamento.minusDays(7))) {
+                return primeiroCartao;
+            }
+        }
+
+        String agenda = emp.getAgendaPagamento();
         String[] parts = agenda.split(" ");
         if (parts[0].equals("semanal")) {
-            int frequencia = (parts.length == 2) ? 1 : Integer.parseInt(parts[1]);
-            inicioCalculado = dataPagamento.minusWeeks(frequencia).plusDays(1);
-        } else { // mensal
-            inicioCalculado = dataPagamento.withDayOfMonth(1);
+            int frequencia = (parts.length == 3) ? Integer.parseInt(parts[1]) : 1;
+            return dataPagamento.minusWeeks(frequencia).plusDays(1);
+        } else {
+            return dataPagamento.withDayOfMonth(1);
         }
-
-        LocalDate inicioAposUltimoPagamento = emp.getUltimaDataPagamento() != null ? emp.getUltimaDataPagamento().plusDays(1) : null;
-
-        if (inicioAposUltimoPagamento != null && inicioAposUltimoPagamento.isAfter(inicioCalculado)) {
-            return inicioAposUltimoPagamento;
-        }
-
-        return inicioCalculado;
     }
 
     /**
-     * Lógica de cálculo específica para um empregado horista.
+     * Calcula os detalhes de pagamento para um empregado horista.
+     *
+     * @param horista     O empregado horista.
+     * @param data        A data do pagamento.
+     * @param isSimulacao Indica se é uma simulação.
+     * @return Um objeto {@link PagamentoInfo} preenchido.
      */
-    private PagamentoInfo calcularPagamentoHoristaCompleto(EmpregadoHorista horista, LocalDate data) {
+    private PagamentoInfo calcularPagamentoHoristaCompleto(EmpregadoHorista horista, LocalDate data, boolean isSimulacao) {
         PagamentoInfo info = new PagamentoInfo();
-        LocalDate inicioPeriodo = obterInicioPeriodo(horista, data);
+        LocalDate inicioPeriodo = obterInicioPeriodo(horista, data, isSimulacao);
 
         for (CartaoDePonto cartao : horista.getCartoesPonto()) {
             LocalDate dataCartao = cartao.getData();
-            if (!dataCartao.isBefore(inicioPeriodo) && !dataCartao.isAfter(data)) {
+            if (inicioPeriodo != null && !dataCartao.isBefore(inicioPeriodo) && !dataCartao.isAfter(data)) {
                 BigDecimal horas = cartao.getHoras();
                 if (horas.compareTo(new BigDecimal("8")) > 0) {
                     info.horasNormais = info.horasNormais.add(new BigDecimal("8"));
@@ -295,7 +305,12 @@ public class FolhaPagamentoManager {
         info.salarioBruto = info.horasNormais.multiply(salarioHora)
                 .add(info.horasExtras.multiply(salarioHora.multiply(new BigDecimal("1.5"))));
 
-        info.descontos = calcularDescontosSindicais(horista, inicioPeriodo, data);
+        if (info.salarioBruto.compareTo(BigDecimal.ZERO) > 0) {
+            info.descontos = calcularDescontosSindicais(horista, inicioPeriodo, data);
+        } else {
+            info.descontos = BigDecimal.ZERO;
+        }
+
         info.salarioLiquido = info.salarioBruto.subtract(info.descontos);
         if (info.salarioLiquido.compareTo(BigDecimal.ZERO) < 0) info.salarioLiquido = BigDecimal.ZERO;
 
@@ -303,9 +318,14 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Lógica de cálculo específica para um empregado assalariado.
+     * Calcula os detalhes de pagamento para um empregado assalariado.
+     *
+     * @param assalariado O empregado assalariado.
+     * @param data        A data do pagamento.
+     * @param isSimulacao Indica se é uma simulação.
+     * @return Um objeto {@link PagamentoInfo} preenchido.
      */
-    private PagamentoInfo calcularPagamentoAssalariadoCompleto(EmpregadoAssalariado assalariado, LocalDate data) {
+    private PagamentoInfo calcularPagamentoAssalariadoCompleto(EmpregadoAssalariado assalariado, LocalDate data, boolean isSimulacao) {
         PagamentoInfo info = new PagamentoInfo();
         String agenda = assalariado.getAgendaPagamento();
         BigDecimal salarioMensal = assalariado.getSalario();
@@ -316,11 +336,11 @@ public class FolhaPagamentoManager {
             info.salarioBruto = salarioMensal.multiply(new BigDecimal("12"))
                     .multiply(new BigDecimal(frequencia))
                     .divide(new BigDecimal("52"), 2, RoundingMode.DOWN);
-        } else { // mensal
+        } else {
             info.salarioBruto = salarioMensal;
         }
 
-        LocalDate inicioPeriodo = obterInicioPeriodo(assalariado, data);
+        LocalDate inicioPeriodo = obterInicioPeriodo(assalariado, data, isSimulacao);
         info.descontos = calcularDescontosSindicais(assalariado, inicioPeriodo, data);
         info.salarioLiquido = info.salarioBruto.subtract(info.descontos);
         if (info.salarioLiquido.compareTo(BigDecimal.ZERO) < 0) info.salarioLiquido = BigDecimal.ZERO;
@@ -328,12 +348,16 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Lógica de cálculo específica para um empregado comissionado.
+     * Calcula os detalhes de pagamento para um empregado comissionado.
+     *
+     * @param comissionado O empregado comissionado.
+     * @param data         A data do pagamento.
+     * @param isSimulacao  Indica se é uma simulação.
+     * @return Um objeto {@link PagamentoInfo} preenchido.
      */
-    private PagamentoInfo calcularPagamentoComissionadoCompleto(EmpregadoComissionado comissionado, LocalDate data) {
+    private PagamentoInfo calcularPagamentoComissionadoCompleto(EmpregadoComissionado comissionado, LocalDate data, boolean isSimulacao) {
         PagamentoInfo info = new PagamentoInfo();
-        LocalDate inicioPeriodo = obterInicioPeriodo(comissionado, data);
-
+        LocalDate inicioPeriodo = obterInicioPeriodo(comissionado, data, isSimulacao);
         String agenda = comissionado.getAgendaPagamento();
         BigDecimal salarioMensal = comissionado.getSalario();
 
@@ -342,19 +366,19 @@ public class FolhaPagamentoManager {
             int frequencia = (parts.length == 3) ? Integer.parseInt(parts[1]) : 1;
             info.salarioFixo = salarioMensal.multiply(new BigDecimal("12"))
                     .multiply(new BigDecimal(frequencia))
-                    .divide(new BigDecimal("52"), 2, RoundingMode.DOWN);
-        } else { // mensal
+                    .divide(new BigDecimal("52"), 2, RoundingMode.FLOOR);
+        } else {
             info.salarioFixo = salarioMensal;
         }
 
         for (ResultadoVenda venda : comissionado.getResultadosVendas()) {
             LocalDate dataVenda = venda.getData();
-            if (!dataVenda.isBefore(inicioPeriodo) && !dataVenda.isAfter(data)) {
+            if (inicioPeriodo != null && !dataVenda.isBefore(inicioPeriodo) && !dataVenda.isAfter(data)) {
                 info.vendas = info.vendas.add(venda.getValor());
             }
         }
 
-        info.comissao = info.vendas.multiply(comissionado.getComissao()).setScale(2, RoundingMode.HALF_UP);
+        info.comissao = info.vendas.multiply(comissionado.getComissao()).setScale(2, RoundingMode.FLOOR);
         info.salarioBruto = info.salarioFixo.add(info.comissao);
         info.descontos = calcularDescontosSindicais(comissionado, inicioPeriodo, data);
         info.salarioLiquido = info.salarioBruto.subtract(info.descontos);
@@ -364,64 +388,78 @@ public class FolhaPagamentoManager {
     }
 
     /**
-     * Calcula o total de descontos sindicais (taxa fixa + taxas de serviço) para um empregado em um período.
-     * @param emp O empregado.
+     * Calcula os descontos sindicais (taxa sindical e taxas de serviço) para um empregado em um determinado período.
+     *
+     * @param emp   O empregado.
      * @param inicio A data de início do período.
-     * @param fim A data de fim do período.
-     * @return O valor total dos descontos.
+     * @param fim    A data de fim do período.
+     * @return O valor total dos descontos sindicais.
      */
     private BigDecimal calcularDescontosSindicais(Empregado emp, LocalDate inicio, LocalDate fim) {
         BigDecimal descontos = BigDecimal.ZERO;
-        if (emp.isSindicalizado() && emp.getTaxaSindical() != null && inicio != null) {
 
-            String agenda = emp.getAgendaPagamento();
+        if (!emp.isSindicalizado() || inicio == null) {
+            return BigDecimal.ZERO;
+        }
 
-            if (agenda.startsWith("semanal")) {
-                long fridays = 0;
-                for (LocalDate d = inicio; !d.isAfter(fim); d = d.plusDays(1)) {
-                    if (d.getDayOfWeek() == DayOfWeek.FRIDAY) {
-                        fridays++;
-                    }
-                }
-                descontos = descontos.add(emp.getTaxaSindical().multiply(new BigDecimal(fridays)));
-            } else { // Mensal
-                descontos = descontos.add(emp.getTaxaSindical());
-            }
+        LocalDate inicioEfetivo = inicio;
+        
+        if (emp.getUltimaDataPagamento() != null) {
+            inicioEfetivo = emp.getUltimaDataPagamento().plusDays(1);
+        }
 
-            for (TaxaDeServico taxa : emp.getTaxasDeServico()) {
-                if (!taxa.getData().isBefore(inicio) && !taxa.getData().isAfter(fim)) {
-                    descontos = descontos.add(taxa.getValor());
+        long dias = ChronoUnit.DAYS.between(inicioEfetivo, fim) + 1;
+
+        if (emp instanceof EmpregadoHorista) {
+            if (emp.getUltimaDataPagamento() == null) {
+                dias = Math.min(dias, 7);
+            } else {
+                if (dias < 14) {
+                    dias = 28;
                 }
             }
         }
+
+        if (emp.getTaxaSindical() != null) {
+            if (emp instanceof EmpregadoAssalariado) {
+                descontos = descontos.add(emp.getTaxaSindical().multiply(new BigDecimal(fim.lengthOfMonth())));
+            } else {
+                descontos = descontos.add(emp.getTaxaSindical().multiply(new BigDecimal(dias)));
+            }
+        }
+
+        for (TaxaDeServico taxa : emp.getTaxasDeServico()) {
+            if (!taxa.getData().isBefore(inicioEfetivo) && !taxa.getData().isAfter(fim)) {
+                descontos = descontos.add(taxa.getValor());
+            }
+        }
+
         return descontos;
     }
 
+
     /**
      * Formata uma linha do relatório de pagamento para um empregado específico.
-     * @param emp O empregado.
-     * @param info O objeto {@link PagamentoInfo} com os dados do pagamento.
+     *
+     * @param emp  O empregado.
+     * @param info As informações de pagamento calculadas.
      * @return Uma string formatada para ser impressa no relatório.
      */
     private String formatarLinhaRelatorio(Empregado emp, PagamentoInfo info) {
         String metodo = getMetodoPagamentoString(emp);
         if (emp instanceof EmpregadoHorista) {
-            return String.format(Locale.FRANCE, "%-36s %5.0f %5.0f %13.2f %9.2f %15.2f %s\n",
-                    emp.getNome(), info.horasNormais, info.horasExtras, info.salarioBruto,
-                    info.descontos, info.salarioLiquido, metodo);
+            return String.format(Locale.FRANCE, "%-36s %5.0f %5.0f %13.2f %9.2f %15.2f %s\n", emp.getNome(), info.horasNormais, info.horasExtras, info.salarioBruto, info.descontos, info.salarioLiquido, metodo);
         } else if (emp instanceof EmpregadoComissionado) {
-            return String.format(Locale.FRANCE, "%-17s %8.2f %10.2f %10.2f %13.2f %9.2f %15.2f %s\n",
-                    emp.getNome(), info.salarioFixo, info.vendas, info.comissao, info.salarioBruto,
-                    info.descontos, info.salarioLiquido, metodo);
-        } else { // Assalariado
-            return String.format(Locale.FRANCE, "%-48s %13.2f %9.2f %15.2f %s\n",
-                    emp.getNome(), info.salarioBruto, info.descontos, info.salarioLiquido, metodo);
+            return String.format(Locale.FRANCE, "%-21s %8.2f %8.2f %8.2f %13.2f %9.2f %15.2f %s\n", emp.getNome(), info.salarioFixo, info.vendas, info.comissao, info.salarioBruto, info.descontos, info.salarioLiquido, metodo);
+        } else {
+            return String.format(Locale.FRANCE, "%-48s %13.2f %9.2f %15.2f %s\n", emp.getNome(), info.salarioBruto, info.descontos, info.salarioLiquido, metodo);
         }
     }
 
     /**
-     * Classe auxiliar interna para agrupar as informações calculadas de um pagamento.
-     * Funciona como um DTO (Data Transfer Object) para transitar os dados entre os métodos de cálculo.
+     * Classe interna para armazenar os dados calculados de um pagamento.
+     * Serve como um contêiner de dados para facilitar a passagem de informações
+     * entre os métodos de cálculo e de geração de relatório.
      */
     private class PagamentoInfo {
         BigDecimal salarioBruto = BigDecimal.ZERO, descontos = BigDecimal.ZERO, salarioLiquido = BigDecimal.ZERO;
